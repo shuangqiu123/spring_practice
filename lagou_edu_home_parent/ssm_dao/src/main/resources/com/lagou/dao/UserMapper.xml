@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lagou.dao.UserMapper">
+    <select id="findAllUserByPage" resultType="com.lagou.domain.User">
+        SELECT id,NAME,portrait,phone,PASSWORD,STATUS,create_time FROM USER
+        <where>
+        <if test="true">
+            and is_del != 1
+        </if>
+        <if test="username != null">
+            and name = #{username}
+        </if>
+        <if test="startCreateTime != null and endCreateTime != null">
+            and create_time BETWEEN #{startCreateTime} AND #{endCreateTime}
+        </if>
+        </where>
+
+    </select>
+
+
+
+    <select id="login" resultType="com.lagou.domain.User" parameterType="com.lagou.domain.User">
+        select * from user where phone=#{phone}
+    </select>
+
+
+    <select id="findUserRelationRoleById" parameterType="int" resultType="com.lagou.domain.Role">
+        select * FROM roles r INNER JOIN user_role_relation ur ON r.`id` = ur.`role_id` INNER JOIN USER u ON ur.`user_id` = u.`id` WHERE u.`id` = #{id}
+    </select>
+
+    <delete id="deleteUserContextRole" parameterType="int">
+        delete from user_role_relation where user_id=#{userId}
+    </delete>
+
+    <insert id="userContextRole" parameterType="com.lagou.domain.User_Role_relation">
+        insert into user_role_relation values(null,#{userId},#{roleId},#{createdTime},#{updatedTime},#{createdBy},#{updatedby})
+    </insert>
+
+    <select id="findParentMenuByRoleId" parameterType="java.util.List" resultType="com.lagou.domain.Menu">
+        select distinct m.* from roles r inner join role_menu_relation rm on r.id=rm.role_id inner join menu m on m.id=rm.menu_id
+        where m.parent_id=-1 and r.id in
+        <foreach collection="list" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+
+
+    <select id="findSubMenuByPid" parameterType="int" resultType="com.lagou.domain.Menu">
+        select * from menu where parent_id=#{pid}
+    </select>
+
+    <select id="findResourceByRoleId" resultType="com.lagou.domain.Resource" parameterType="java.util.List">
+        SELECT
+        DISTINCT rc.*
+        FROM roles r INNER JOIN role_resource_relation rrr ON r.`id` = rrr.`role_id`
+        INNER JOIN resource rc ON rrr.`resource_id` = rc.`id` WHERE r.id IN
+        <foreach item="item" index="index" collection="list" open="("
+                 separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+</mapper>
